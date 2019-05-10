@@ -31,6 +31,10 @@
 module antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
 import antlr.v4.runtime.tree.ParseTreeVisitor;
+import antlr.v4.runtime.tree.ErrorNode;
+import antlr.v4.runtime.tree.ParseTree;
+import antlr.v4.runtime.tree.RuleNode;
+import antlr.v4.runtime.tree.TerminalNode;
 
 /**
  * TODO add class description
@@ -47,7 +51,7 @@ abstract class AbstractParseTreeVisitor(T) : ParseTreeVisitor!T
      */
     public T visit(ParseTree tree)
     {
-        return tree.accept(this);
+        assert(false);
     }
 
     /**
@@ -77,7 +81,7 @@ abstract class AbstractParseTreeVisitor(T) : ParseTreeVisitor!T
             }
 
             ParseTree c = node.getChild(i);
-            T childResult = c.accept(this);
+            T childResult = visit(c);
             result = aggregateResult(result, childResult);
         }
 
@@ -124,7 +128,7 @@ abstract class AbstractParseTreeVisitor(T) : ParseTreeVisitor!T
      */
     private T defaultResult()
     {
-        return null;
+        return T.init;
     }
 
     /**
@@ -149,6 +153,7 @@ abstract class AbstractParseTreeVisitor(T) : ParseTreeVisitor!T
      */
     private T aggregateResult(T aggregate, T nextResult)
     {
+        return nextResult;
     }
 
     /**
@@ -178,6 +183,7 @@ abstract class AbstractParseTreeVisitor(T) : ParseTreeVisitor!T
      */
     private bool shouldVisitNextChild(RuleNode node, T currentResult)
     {
+        return true;
     }
 
 }

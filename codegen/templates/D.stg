@@ -21,7 +21,7 @@ dTypeInitMap ::= [
 ParserFile(file, parser, namedActions, contextSuperClass) ::= <<
 <fileHeader(file.grammarFileName, file.ANTLRVersion)>
 <if(file.genPackage)>
-package <file.genPackage>;
+module <file.genPackage>.<file.parserName>;
 <endif>
 <namedActions.header>
 import antlr.v4.runtime.atn.ATN;
@@ -52,11 +52,15 @@ import antlr.v4.runtime.tree.TerminalNode;
 ListenerFile(file, header, namedActions) ::= <<
 <fileHeader(file.grammarFileName, file.ANTLRVersion)>
 <if(file.genPackage)>
-package <file.genPackage>;
+module <file.genPackage>.<file.grammarName>Listener;
 <endif>
 <header>
 import antlr.v4.runtime.tree.ParseTreeListener;
+<if(file.genPackage)>
+import <file.genPackage>.<file.parserName> : <file.parserName>;
+<else>
 import <file.parserName> : <file.parserName>;
+<endif>
 
 /**
  * This interface defines a complete listener for a parse tree produced by
@@ -90,15 +94,20 @@ void exit<lname; format="cap">(<file.parserName>.<lname; format="cap">Context ct
 BaseListenerFile(file, header, namedActions) ::= <<
 <fileHeader(file.grammarFileName, file.ANTLRVersion)>
 <if(file.genPackage)>
-package <file.genPackage>;
+module <file.genPackage>.<file.grammarName>BaseListener;
 <endif>
 <header>
 
 import antlr.v4.runtime.ParserRuleContext;
 import antlr.v4.runtime.tree.ErrorNode;
 import antlr.v4.runtime.tree.TerminalNode;
+<if(file.genPackage)>
+import <file.genPackage>.<file.grammarName>Listener;
+import <file.genPackage>.<file.parserName> : <file.parserName>;
+<else>
 import <file.grammarName>Listener;
-import <file.parserName>: <file.parserName>;
+import <file.parserName> : <file.parserName>;
+<endif>
 
 /**
  * This class provides an empty implementation of {@link <file.grammarName>Listener},
@@ -150,10 +159,15 @@ override public void exit<lname; format="cap">(<file.parserName>.<lname; format=
 VisitorFile(file, header, namedActions) ::= <<
 <fileHeader(file.grammarFileName, file.ANTLRVersion)>
 <if(file.genPackage)>
-package <file.genPackage>;
+module <file.genPackage>.<file.grammarName>Visitor;
 <endif>
 <header>
 import antlr.v4.runtime.tree.ParseTreeVisitor;
+<if(file.genPackage)>
+import <file.genPackage>.<file.parserName> : <file.parserName>;
+<else>
+import <file.parserName> : <file.parserName>;
+<endif>
 
 /**
  * This interface defines a complete generic visitor for a parse tree produced
@@ -174,17 +188,25 @@ public interface <file.grammarName>Visitor(T) : ParseTreeVisitor!T {
  * @param ctx the parse tree
  * @return the visitor result
  */
-T visit<lname; format="cap">(<file.parserName>.<lname; format="cap">Context ctx);}; separator="\n">
+T visit<lname; format="cap">(<file.genPackage>.<file.parserName>.<lname; format="cap">Context ctx);}; separator="\n">
 }
 >>
 
 BaseVisitorFile(file, header, namedActions) ::= <<
 <fileHeader(file.grammarFileName, file.ANTLRVersion)>
 <if(file.genPackage)>
-package <file.genPackage>;
+module <file.genPackage>.<file.grammarName>BaseVisitor;
 <endif>
 <header>
+<if(file.genPackage)>
+import <file.genPackage>.<file.grammarName>Visitor : <file.grammarName>Visitor;
+import <file.genPackage>.<file.parserName> : <file.parserName>;
+<else>
+import <file.grammarName>Visitor : <file.grammarName>Visitor;
+import <file.parserName> : <file.parserName>;
+<endif>
 import antlr.v4.runtime.tree.AbstractParseTreeVisitor;
+import antlr.v4.runtime.tree.ParseTree;
 
 /**
  * This class provides an empty implementation of {@link <file.grammarName>Visitor},
@@ -195,6 +217,19 @@ import antlr.v4.runtime.tree.AbstractParseTreeVisitor;
  * operations with no return type.
  */
 public class <file.grammarName>BaseVisitor(T) : AbstractParseTreeVisitor!T, <file.grammarName>Visitor!T {
+override T visit(antlr.v4.runtime.tree.ParseTree.ParseTree ctx)
+{
+    // .classinfo on an interface gives the interface's classinfo, not the underlying class's, so
+    // cast to Object first.
+    auto obj = cast(Object)ctx;
+	<file.visitorNames:{lname |
+    if (obj.classinfo is <file.genPackage>.<file.parserName>.<lname; format="cap">Context.classinfo)
+    {
+        return visit<lname; format="cap">(cast(<file.genPackage>.<file.parserName>.<lname; format="cap">Context)obj);
+    \}
+}; separator="\n">
+    assert(false, "unrecognized type " ~ ctx.classinfo.name ~ " for node " ~ (cast(Object)ctx).toString);
+}
 	<file.visitorNames:{lname |
 /**
  * {@inheritDoc\}
@@ -202,7 +237,7 @@ public class <file.grammarName>BaseVisitor(T) : AbstractParseTreeVisitor!T, <fil
  * \<p>The default implementation returns the result of calling
  * {@link #visitChildren\} on {@code ctx\}.\</p>
  */
-override public T visit<lname; format="cap">(<file.parserName>.<lname; format="cap">Context ctx) { return visitChildren(ctx); \}}; separator="\n">
+override public T visit<lname; format="cap">(<file.genPackage>.<file.parserName>.<lname; format="cap">Context ctx) { return visitChildren(ctx); \}}; separator="\n">
 }
 >>
 
@@ -812,13 +847,8 @@ public void <if(method.isEnter)>enter<else>exit<endif>Rule(ParseTreeListener lis
 }
 >>
 
-VisitorDispatchMethod(method) ::= <<
-override
-public T accept(T)(ParseTreeVisitor visitor) {
-	if (visitor.classinfo == <parser.grammarName>Visitor.classinfo) return (cast(<parser.grammarName>Visitor!T)visitor).visit<struct.derivedFromName; format="cap">(this);
-	else return visitor.visitChildren(this);
-}
->>
+// Visitor methods are not useful for us.
+VisitorDispatchMethod(method) ::= <<>>
 
 AttributeDecl(d) ::= "<d.type> <d.name><if(d.initValue)> = <d.initValue><endif>"
 
@@ -873,7 +903,7 @@ _prevctx = _localctx;
 LexerFile(lexerFile, lexer, namedActions) ::= <<
 <fileHeader(lexerFile.grammarFileName, lexerFile.ANTLRVersion)>
 <if(lexerFile.genPackage)>
-package <lexerFile.genPackage>;
+module <lexerFile.genPackage>.<lexerFile.grammarName>Lexer;
 <endif>
 <namedActions.header>
 import antlr.v4.runtime.Lexer;

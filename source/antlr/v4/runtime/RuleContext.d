@@ -188,11 +188,6 @@ class RuleContext : RuleNode, InterfaceRuleContext
         return 0;
     }
 
-    public U accept(U)(ParseTreeVisitor!U visitor)
-    {
-        return visitor.visitChildren(this);
-    }
-
     /**
      * Print out a whole tree, not just a node, in LISP format
      * (root child1 .. childN). Print just a node if this is a leaf.

@@ -36,11 +36,6 @@ interface ParseTree : SyntaxTree
      */
     public override ParseTree getChild(int i);
 
-    /**
-     * The {@link ParseTreeVisitor} needs a double dispatch method.
-     */
-    public T accept(T)(ParseTreeVisitor!U visitor);
-
     public Variant getText();
 
     /**

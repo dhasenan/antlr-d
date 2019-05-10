@@ -5,6 +5,10 @@
  */
 
 module antlr.v4.runtime.tree.ParseTreeVisitor;
+import antlr.v4.runtime.tree.ParseTree;
+import antlr.v4.runtime.tree.RuleNode;
+import antlr.v4.runtime.tree.TerminalNode;
+import antlr.v4.runtime.tree.ErrorNode;
 
 /**
  * This interface defines the basic notion of a parse tree visitor. Generated
